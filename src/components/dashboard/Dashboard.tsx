@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Upload, Play, BarChart3, LogOut } from 'lucide-react';
+import { BookOpen, Upload, Play, BarChart3, LogOut, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ExamPatternDialog } from '@/components/upload/ExamPatternDialog';
+import { BrowseTests } from '@/components/browse/BrowseTests';
 
 interface Test {
   id: string;
@@ -14,6 +16,8 @@ interface Test {
   total_questions: number;
   duration_minutes: number;
   created_at: string;
+  exam_pattern?: string;
+  is_public?: boolean;
 }
 
 export const Dashboard = () => {
@@ -21,16 +25,20 @@ export const Dashboard = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExamDialog, setShowExamDialog] = useState(false);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'browse'>('dashboard');
 
   useEffect(() => {
-    fetchTests();
-  }, []);
+    if (currentView === 'dashboard') {
+      fetchTests();
+    }
+  }, [currentView]);
 
   const fetchTests = async () => {
     try {
       const { data, error } = await supabase
         .from('tests')
         .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -58,6 +66,42 @@ export const Dashboard = () => {
   const handleUploadClick = () => {
     setShowExamDialog(true);
   };
+
+  const handleBrowseClick = () => {
+    setCurrentView('browse');
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+  };
+
+  if (currentView === 'browse') {
+    return (
+      <div>
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+                <h1 className="text-xl font-semibold text-gray-900">MCQ Test Platform</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
+                  ← Back to Dashboard
+                </Button>
+                <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <BrowseTests />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,14 +146,14 @@ export const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleBrowseClick}>
             <CardHeader className="text-center">
-              <Play className="h-12 w-12 text-green-600 mx-auto mb-2" />
-              <CardTitle>Take Test</CardTitle>
-              <CardDescription>Start a practice test</CardDescription>
+              <Search className="h-12 w-12 text-green-600 mx-auto mb-2" />
+              <CardTitle>Browse Tests</CardTitle>
+              <CardDescription>Explore available tests by category</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
+              <Button className="w-full" variant="outline" onClick={handleBrowseClick}>
                 Browse Tests
               </Button>
             </CardContent>
@@ -161,6 +205,16 @@ export const Dashboard = () => {
                         <span>{test.total_questions} questions</span>
                         <span>{test.duration_minutes} minutes</span>
                         <span>Created {new Date(test.created_at).toLocaleDateString()}</span>
+                        {test.exam_pattern && (
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {test.exam_pattern.toUpperCase()}
+                          </span>
+                        )}
+                        {test.is_public && (
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Public
+                          </span>
+                        )}
                       </div>
                     </div>
                     <Button size="sm">
