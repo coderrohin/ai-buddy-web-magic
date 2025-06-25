@@ -11,12 +11,12 @@ import { toast } from '@/hooks/use-toast';
 interface Test {
   id: string;
   title: string;
-  description: string;
-  total_questions: number;
-  duration_minutes: number;
+  description: string | null;
+  total_questions: number | null;
+  duration_minutes: number | null;
   created_at: string;
-  exam_pattern: string;
-  is_public: boolean;
+  exam_pattern?: string;
+  is_public?: boolean;
 }
 
 const examCategories = [
@@ -53,11 +53,18 @@ export const BrowseTests = () => {
       const { data, error } = await supabase
         .from('tests')
         .select('*')
-        .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTests(data || []);
+      
+      // Transform the data to match our interface, providing defaults for missing fields
+      const transformedData: Test[] = (data || []).map(test => ({
+        ...test,
+        exam_pattern: test.exam_pattern || 'custom',
+        is_public: test.is_public || false
+      }));
+      
+      setTests(transformedData);
     } catch (error) {
       console.error('Error fetching tests:', error);
       toast({
@@ -131,7 +138,7 @@ export const BrowseTests = () => {
                     <CardTitle className="flex items-center justify-between">
                       <span className="truncate">{test.title}</span>
                       <Badge variant="outline" className="ml-2">
-                        {examCategories.find(cat => cat.id === test.exam_pattern)?.name}
+                        {examCategories.find(cat => cat.id === test.exam_pattern)?.name || 'Custom'}
                       </Badge>
                     </CardTitle>
                     <CardDescription>{test.description}</CardDescription>
@@ -141,11 +148,11 @@ export const BrowseTests = () => {
                       <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
                           <BookOpen className="h-4 w-4" />
-                          {test.total_questions} questions
+                          {test.total_questions || 0} questions
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {test.duration_minutes} mins
+                          {test.duration_minutes || 60} mins
                         </span>
                       </div>
                     </div>
