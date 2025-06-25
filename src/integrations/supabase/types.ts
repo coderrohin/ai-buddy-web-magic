@@ -199,7 +199,9 @@ export type Database = {
           created_at: string
           description: string | null
           duration_minutes: number | null
+          exam_pattern: string | null
           id: string
+          is_public: boolean | null
           pdf_url: string | null
           title: string
           total_questions: number | null
@@ -210,7 +212,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
+          exam_pattern?: string | null
           id?: string
+          is_public?: boolean | null
           pdf_url?: string | null
           title: string
           total_questions?: number | null
@@ -221,7 +225,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number | null
+          exam_pattern?: string | null
           id?: string
+          is_public?: boolean | null
           pdf_url?: string | null
           title?: string
           total_questions?: number | null

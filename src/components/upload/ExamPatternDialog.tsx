@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card } from '@/components/ui/card';
 import { Upload, Clock, FileText, File } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface ExamPatternDialogProps {
   open: boolean;
@@ -33,10 +36,12 @@ const examPatterns = [
 ];
 
 export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps) => {
+  const { user } = useAuth();
   const [selectedPattern, setSelectedPattern] = useState<string>('');
   const [customTime, setCustomTime] = useState<string>('');
   const [allowPublicUse, setAllowPublicUse] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,25 +50,78 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
     } else {
       setSelectedFile(null);
       if (file) {
-        alert('Please select a PDF file only.');
+        toast({
+          title: "Invalid file type",
+          description: "Please select a PDF file only.",
+          variant: "destructive",
+        });
       }
     }
   };
 
-  const handleStartTest = () => {
-    if (!selectedPattern || !allowPublicUse || !selectedFile) return;
+  const handleStartTest = async () => {
+    if (!selectedPattern || !allowPublicUse || !selectedFile || !user) return;
     
     if (selectedPattern === 'custom' && !customTime) return;
 
-    console.log({
-      examPattern: selectedPattern,
-      duration: selectedPattern === 'custom' ? parseInt(customTime) : examPatterns.find(p => p.id === selectedPattern)?.duration,
-      allowPublicUse: allowPublicUse === 'yes',
-      pdfFile: selectedFile
-    });
+    setUploading(true);
 
-    // TODO: Start test creation process with PDF upload
-    onOpenChange(false);
+    try {
+      // Upload PDF to Supabase Storage
+      const fileName = `${user.id}/${Date.now()}_${selectedFile.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('test-pdfs')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('test-pdfs')
+        .getPublicUrl(fileName);
+
+      // Create test record in database
+      const duration = selectedPattern === 'custom' ? parseInt(customTime) : examPatterns.find(p => p.id === selectedPattern)?.duration;
+      
+      const { data: testData, error: testError } = await supabase
+        .from('tests')
+        .insert({
+          user_id: user.id,
+          title: selectedFile.name.replace('.pdf', ''),
+          description: `${examPatterns.find(p => p.id === selectedPattern)?.name || 'Custom'} test uploaded from PDF`,
+          pdf_url: urlData.publicUrl,
+          duration_minutes: duration,
+          exam_pattern: selectedPattern,
+          is_public: allowPublicUse === 'yes',
+          total_questions: 0 // Will be updated when PDF is processed
+        })
+        .select()
+        .single();
+
+      if (testError) throw testError;
+
+      toast({
+        title: "Test uploaded successfully!",
+        description: `Your test "${testData.title}" has been created and ${allowPublicUse === 'yes' ? 'is now available for everyone' : 'is private to your account'}.`,
+      });
+
+      // Reset form
+      setSelectedPattern('');
+      setCustomTime('');
+      setAllowPublicUse('');
+      setSelectedFile(null);
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error uploading test:', error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your test. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const isFormValid = selectedPattern && allowPublicUse && selectedFile && (selectedPattern !== 'custom' || customTime);
@@ -90,6 +148,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
               accept=".pdf"
               onChange={handleFileChange}
               className="mb-2"
+              disabled={uploading}
             />
             {selectedFile && (
               <p className="text-sm text-green-600 flex items-center gap-1">
@@ -149,6 +208,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
                 min="1"
                 max="600"
                 className="w-full"
+                disabled={uploading}
               />
             </div>
           )}
@@ -183,10 +243,10 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
           <div className="flex justify-end pt-4 border-t">
             <Button 
               onClick={handleStartTest} 
-              disabled={!isFormValid}
+              disabled={!isFormValid || uploading}
               className="px-8"
             >
-              Upload & Start Test Creation
+              {uploading ? 'Uploading...' : 'Upload & Start Test Creation'}
             </Button>
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +14,8 @@ interface Test {
   total_questions: number | null;
   duration_minutes: number | null;
   created_at: string;
-  exam_pattern?: string;
-  is_public?: boolean;
+  exam_pattern: string;
+  is_public: boolean;
 }
 
 const examCategories = [
@@ -53,18 +52,12 @@ export const BrowseTests = () => {
       const { data, error } = await supabase
         .from('tests')
         .select('*')
+        .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to match our interface, providing defaults for missing fields
-      const transformedData: Test[] = (data || []).map(test => ({
-        ...test,
-        exam_pattern: test.exam_pattern || 'custom',
-        is_public: test.is_public || false
-      }));
-      
-      setTests(transformedData);
+      setTests(data || []);
     } catch (error) {
       console.error('Error fetching tests:', error);
       toast({
