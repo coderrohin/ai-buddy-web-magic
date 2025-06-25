@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          from_device_code: string | null
+          from_user_id: string
+          id: string
+          message: string
+          sent_at: string
+          title: string
+          to_device_code: string | null
+          to_user_id: string
+        }
+        Insert: {
+          from_device_code?: string | null
+          from_user_id: string
+          id?: string
+          message: string
+          sent_at?: string
+          title: string
+          to_device_code?: string | null
+          to_user_id: string
+        }
+        Update: {
+          from_device_code?: string | null
+          from_user_id?: string
+          id?: string
+          message?: string
+          sent_at?: string
+          title?: string
+          to_device_code?: string | null
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -30,6 +63,36 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          device_code: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device_code?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device_code?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }

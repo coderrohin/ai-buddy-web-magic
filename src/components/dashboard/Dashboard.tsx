@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { BookOpen, Upload, Play, BarChart3, LogOut } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ExamPatternDialog } from '@/components/upload/ExamPatternDialog';
 
 interface Test {
   id: string;
@@ -20,6 +20,7 @@ export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExamDialog, setShowExamDialog] = useState(false);
 
   useEffect(() => {
     fetchTests();
@@ -54,6 +55,10 @@ export const Dashboard = () => {
     });
   };
 
+  const handleUploadClick = () => {
+    setShowExamDialog(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -84,14 +89,14 @@ export const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleUploadClick}>
             <CardHeader className="text-center">
               <Upload className="h-12 w-12 text-blue-600 mx-auto mb-2" />
               <CardTitle>Upload Test</CardTitle>
               <CardDescription>Upload a PDF with MCQs</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
+              <Button className="w-full" onClick={handleUploadClick}>
                 Upload PDF
               </Button>
             </CardContent>
@@ -140,7 +145,7 @@ export const Dashboard = () => {
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tests yet</h3>
                 <p className="text-gray-600 mb-4">Upload your first PDF to get started</p>
-                <Button>
+                <Button onClick={handleUploadClick}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload PDF
                 </Button>
@@ -169,6 +174,12 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Exam Pattern Dialog */}
+      <ExamPatternDialog 
+        open={showExamDialog} 
+        onOpenChange={setShowExamDialog} 
+      />
     </div>
   );
 };
