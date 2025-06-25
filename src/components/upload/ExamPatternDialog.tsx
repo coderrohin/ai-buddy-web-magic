@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card } from '@/components/ui/card';
-import { Upload, Clock, FileText } from 'lucide-react';
+import { Upload, Clock, FileText, File } from 'lucide-react';
 
 interface ExamPatternDialogProps {
   open: boolean;
@@ -36,23 +36,37 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
   const [selectedPattern, setSelectedPattern] = useState<string>('');
   const [customTime, setCustomTime] = useState<string>('');
   const [allowPublicUse, setAllowPublicUse] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setSelectedFile(file);
+    } else {
+      setSelectedFile(null);
+      if (file) {
+        alert('Please select a PDF file only.');
+      }
+    }
+  };
 
   const handleStartTest = () => {
-    if (!selectedPattern || !allowPublicUse) return;
+    if (!selectedPattern || !allowPublicUse || !selectedFile) return;
     
     if (selectedPattern === 'custom' && !customTime) return;
 
     console.log({
       examPattern: selectedPattern,
       duration: selectedPattern === 'custom' ? parseInt(customTime) : examPatterns.find(p => p.id === selectedPattern)?.duration,
-      allowPublicUse: allowPublicUse === 'yes'
+      allowPublicUse: allowPublicUse === 'yes',
+      pdfFile: selectedFile
     });
 
-    // TODO: Start test creation process
+    // TODO: Start test creation process with PDF upload
     onOpenChange(false);
   };
 
-  const isFormValid = selectedPattern && allowPublicUse && (selectedPattern !== 'custom' || customTime);
+  const isFormValid = selectedPattern && allowPublicUse && selectedFile && (selectedPattern !== 'custom' || customTime);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -60,11 +74,34 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Upload className="h-5 w-5" />
-            Select Exam Pattern
+            Upload PDF & Select Exam Pattern
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* PDF Upload Section */}
+          <div className="bg-blue-50 p-4 rounded-lg border">
+            <Label className="text-base font-medium mb-3 block flex items-center gap-2">
+              <File className="h-4 w-4" />
+              Upload PDF File
+            </Label>
+            <Input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="mb-2"
+            />
+            {selectedFile && (
+              <p className="text-sm text-green-600 flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                Selected: {selectedFile.name}
+              </p>
+            )}
+            {!selectedFile && (
+              <p className="text-sm text-gray-500">Please select a PDF file containing MCQ questions</p>
+            )}
+          </div>
+
           {/* Exam Pattern Selection */}
           <div>
             <Label className="text-base font-medium mb-3 block">
@@ -149,7 +186,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
               disabled={!isFormValid}
               className="px-8"
             >
-              Start Test Creation
+              Upload & Start Test Creation
             </Button>
           </div>
         </div>
