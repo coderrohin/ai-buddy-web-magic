@@ -9,6 +9,7 @@ import { ExamPatternDialog } from '@/components/upload/ExamPatternDialog';
 import { BrowseTests } from '@/components/browse/BrowseTests';
 import { TestTakingPanel } from '@/components/test/TestTakingPanel';
 import { TestResultsView } from '@/components/test/TestResultsView';
+import { ViewAnalytics } from '@/components/analytics/ViewAnalytics';
 
 interface Test {
   id: string;
@@ -71,9 +72,8 @@ export const Dashboard = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExamDialog, setShowExamDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'browse' | 'test' | 'results'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'browse' | 'test' | 'analytics'>('dashboard');
   const [currentTest, setCurrentTest] = useState<any>(null);
-  const [testResults, setTestResults] = useState<any>(null);
 
   useEffect(() => {
     if (currentView === 'dashboard') {
@@ -122,7 +122,6 @@ export const Dashboard = () => {
   const handleBackToDashboard = () => {
     setCurrentView('dashboard');
     setCurrentTest(null);
-    setTestResults(null);
   };
 
   const handleStartTest = (test: Test) => {
@@ -138,25 +137,40 @@ export const Dashboard = () => {
   const handleTestSubmit = async (answers: Record<string, any>) => {
     console.log('Test submitted with answers:', answers);
     
-    // Here we would normally send answers to AI for checking
-    // For now, we'll create a mock result
-    const mockResult = {
-      testId: currentTest.id,
-      testTitle: currentTest.title,
-      totalQuestions: currentTest.questions.length,
-      answers: answers,
-      submittedAt: new Date().toISOString(),
-      status: 'submitted'
-    };
-    
-    setTestResults(mockResult);
-    setCurrentView('results');
-    setCurrentTest(null);
-    
-    toast({
-      title: "Test Submitted Successfully!",
-      description: "Your test has been submitted. You can now view your results.",
-    });
+    // Here we would save the test attempt to the database
+    try {
+      const { error } = await supabase
+        .from('test_attempts')
+        .insert({
+          user_id: user?.id,
+          test_id: currentTest.id,
+          total_questions: currentTest.questions.length,
+          status: 'completed',
+          finished_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test Submitted Successfully!",
+        description: "Your test has been submitted. Check it in View Analytics.",
+      });
+      
+      // Navigate to analytics instead of results
+      setCurrentView('analytics');
+      setCurrentTest(null);
+    } catch (error) {
+      console.error('Error saving test attempt:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save test attempt",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewAnalytics = () => {
+    setCurrentView('analytics');
   };
 
   if (currentView === 'test' && currentTest) {
@@ -172,12 +186,9 @@ export const Dashboard = () => {
     );
   }
 
-  if (currentView === 'results' && testResults) {
+  if (currentView === 'analytics') {
     return (
-      <TestResultsView
-        results={testResults}
-        onBackToDashboard={handleBackToDashboard}
-      />
+      <ViewAnalytics onBackToDashboard={handleBackToDashboard} />
     );
   }
 
@@ -265,14 +276,14 @@ export const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleViewAnalytics}>
             <CardHeader className="text-center">
               <BarChart3 className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-              <CardTitle>View Results</CardTitle>
-              <CardDescription>Check your performance</CardDescription>
+              <CardTitle>View Analytics</CardTitle>
+              <CardDescription>Check your test performance and results</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
+              <Button className="w-full" variant="outline" onClick={handleViewAnalytics}>
                 View Analytics
               </Button>
             </CardContent>

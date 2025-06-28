@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ export const BrowseTests = () => {
       const { data, error } = await supabase
         .from('tests')
         .select('*')
-        .eq('is_public', true)
+        .eq('is_public', true)  // Only fetch public tests
         .order('created_at', { ascending: false });
 
       if (error) throw error;
