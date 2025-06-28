@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +45,41 @@ export const BrowseTests = () => {
 
   useEffect(() => {
     fetchPublicTests();
+    
+    // Set up real-time subscription for tests
+    const channel = supabase
+      .channel('public-tests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'tests',
+          filter: 'is_public=eq.true'
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            setTests(current => [payload.new as Test, ...current]);
+          } else if (payload.eventType === 'UPDATE') {
+            setTests(current => 
+              current.map(test => 
+                test.id === payload.new.id ? payload.new as Test : test
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setTests(current => 
+              current.filter(test => test.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchPublicTests = async () => {

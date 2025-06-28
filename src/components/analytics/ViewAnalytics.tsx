@@ -68,17 +68,34 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
   };
 
   const handleCheckTest = (attempt: TestAttempt) => {
-    // Create a mock result object for the TestResultsView
-    const mockResult = {
+    // Create a result object for checking
+    const result = {
       testId: attempt.test_id,
       testTitle: attempt.tests.title,
       totalQuestions: attempt.total_questions,
       answers: {}, // This would need to be fetched from user_answers table
       submittedAt: attempt.finished_at || attempt.started_at,
-      status: attempt.status === 'completed' && attempt.score !== null ? 'checked' : 'submitted'
+      status: 'submitted' as const // Always start as submitted for checking flow
     };
     
-    setSelectedResult(mockResult);
+    setSelectedResult(result);
+  };
+
+  const handleViewResult = (attempt: TestAttempt) => {
+    // Create a result object for viewing checked results
+    const result = {
+      testId: attempt.test_id,
+      testTitle: attempt.tests.title,
+      totalQuestions: attempt.total_questions,
+      answers: {}, // This would need to be fetched from user_answers table
+      submittedAt: attempt.finished_at || attempt.started_at,
+      status: 'checked' as const,
+      score: attempt.score,
+      maxScore: attempt.total_questions,
+      checkedAnswers: {} // This would contain the detailed results
+    };
+    
+    setSelectedResult(result);
   };
 
   const formatDate = (dateString: string) => {
@@ -192,7 +209,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
                     <div className="flex items-center justify-end">
                       {attempt.status === 'completed' ? (
                         attempt.score !== null ? (
-                          <Button onClick={() => handleCheckTest(attempt)}>
+                          <Button onClick={() => handleViewResult(attempt)}>
                             View Results
                           </Button>
                         ) : (
