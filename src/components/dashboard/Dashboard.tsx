@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,8 @@ import { BookOpen, Upload, Play, BarChart3, LogOut, Search } from 'lucide-react'
 import { toast } from '@/hooks/use-toast';
 import { ExamPatternDialog } from '@/components/upload/ExamPatternDialog';
 import { BrowseTests } from '@/components/browse/BrowseTests';
+import { TestTakingPanel } from '@/components/test/TestTakingPanel';
+import { TestResultsView } from '@/components/test/TestResultsView';
 
 interface Test {
   id: string;
@@ -20,12 +21,59 @@ interface Test {
   is_public?: boolean;
 }
 
+// Sample questions for testing (will be replaced with AI-generated questions)
+const sampleQuestions = [
+  {
+    id: '1',
+    type: 'mcq' as const,
+    section: 'Mathematics',
+    question: 'What is the value of 2 + 2?',
+    options: ['3', '4', '5', '6'],
+    marks: 1
+  },
+  {
+    id: '2',
+    type: 'multi-correct' as const,
+    section: 'Science',
+    question: 'Which of the following are primary colors?',
+    options: ['Red', 'Green', 'Blue', 'Yellow', 'Orange'],
+    marks: 2
+  },
+  {
+    id: '3',
+    type: 'numerical' as const,
+    section: 'Mathematics',
+    question: 'Calculate the square root of 64.',
+    marks: 1
+  },
+  {
+    id: '4',
+    type: 'matrix-match' as const,
+    section: 'General Knowledge',
+    question: 'Match the countries with their capitals:',
+    matrix: {
+      left: ['India', 'France', 'Japan'],
+      right: ['New Delhi', 'Paris', 'Tokyo']
+    },
+    marks: 3
+  },
+  {
+    id: '5',
+    type: 'subjective' as const,
+    section: 'English',
+    question: 'Write a short paragraph about the importance of education.',
+    marks: 5
+  }
+];
+
 export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExamDialog, setShowExamDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'browse'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'browse' | 'test' | 'results'>('dashboard');
+  const [currentTest, setCurrentTest] = useState<any>(null);
+  const [testResults, setTestResults] = useState<any>(null);
 
   useEffect(() => {
     if (currentView === 'dashboard') {
@@ -73,7 +121,65 @@ export const Dashboard = () => {
 
   const handleBackToDashboard = () => {
     setCurrentView('dashboard');
+    setCurrentTest(null);
+    setTestResults(null);
   };
+
+  const handleStartTest = (test: Test) => {
+    setCurrentTest({
+      id: test.id,
+      title: test.title,
+      duration: test.duration_minutes || 60,
+      questions: sampleQuestions
+    });
+    setCurrentView('test');
+  };
+
+  const handleTestSubmit = async (answers: Record<string, any>) => {
+    console.log('Test submitted with answers:', answers);
+    
+    // Here we would normally send answers to AI for checking
+    // For now, we'll create a mock result
+    const mockResult = {
+      testId: currentTest.id,
+      testTitle: currentTest.title,
+      totalQuestions: currentTest.questions.length,
+      answers: answers,
+      submittedAt: new Date().toISOString(),
+      status: 'submitted'
+    };
+    
+    setTestResults(mockResult);
+    setCurrentView('results');
+    setCurrentTest(null);
+    
+    toast({
+      title: "Test Submitted Successfully!",
+      description: "Your test has been submitted. You can now view your results.",
+    });
+  };
+
+  if (currentView === 'test' && currentTest) {
+    return (
+      <TestTakingPanel
+        testId={currentTest.id}
+        testTitle={currentTest.title}
+        duration={currentTest.duration}
+        questions={currentTest.questions}
+        onTestSubmit={handleTestSubmit}
+        onExit={handleBackToDashboard}
+      />
+    );
+  }
+
+  if (currentView === 'results' && testResults) {
+    return (
+      <TestResultsView
+        results={testResults}
+        onBackToDashboard={handleBackToDashboard}
+      />
+    );
+  }
 
   if (currentView === 'browse') {
     return (
@@ -133,27 +239,27 @@ export const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleUploadClick}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowExamDialog(true)}>
             <CardHeader className="text-center">
               <Upload className="h-12 w-12 text-blue-600 mx-auto mb-2" />
               <CardTitle>Upload Test</CardTitle>
               <CardDescription>Upload a PDF with MCQs</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" onClick={handleUploadClick}>
+              <Button className="w-full" onClick={() => setShowExamDialog(true)}>
                 Upload PDF
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleBrowseClick}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setCurrentView('browse')}>
             <CardHeader className="text-center">
               <Search className="h-12 w-12 text-green-600 mx-auto mb-2" />
               <CardTitle>Browse Tests</CardTitle>
               <CardDescription>Explore available tests by category</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline" onClick={handleBrowseClick}>
+              <Button className="w-full" variant="outline" onClick={() => setCurrentView('browse')}>
                 Browse Tests
               </Button>
             </CardContent>
@@ -189,7 +295,7 @@ export const Dashboard = () => {
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tests yet</h3>
                 <p className="text-gray-600 mb-4">Upload your first PDF to get started</p>
-                <Button onClick={handleUploadClick}>
+                <Button onClick={() => setShowExamDialog(true)}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload PDF
                 </Button>
@@ -217,7 +323,7 @@ export const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => handleStartTest(test)}>
                       <Play className="h-4 w-4 mr-2" />
                       Start Test
                     </Button>
