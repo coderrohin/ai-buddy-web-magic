@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Upload, Bot, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Upload, Bot, CheckCircle, XCircle, Clock, FileText, Brain } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
@@ -25,7 +25,7 @@ interface TestResultsViewProps {
 }
 
 export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewProps) => {
-  const [checkingMethod, setCheckingMethod] = useState<'manual' | 'ai' | null>(null);
+  const [checkingMethod, setCheckingMethod] = useState<'upload-ai' | 'pure-ai' | null>(null);
   const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -36,7 +36,7 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
     }
   };
 
-  const handleManualCheck = async () => {
+  const handleUploadAndAICheck = async () => {
     if (!answerKeyFile) {
       toast({
         title: "Error",
@@ -49,28 +49,68 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
     setIsProcessing(true);
     
     try {
-      // Here we would process the answer key and check answers
-      console.log('Processing answer key:', answerKeyFile);
+      // Convert file to base64 for AI processing
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(answerKeyFile);
+      });
+
+      console.log('Processing answer key with AI extraction...');
       
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      /* 
+      // TODO: Implement when API key is provided
+      const response = await fetch('/api/ai-check-with-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          answerKeyFile: fileContent,
+          userAnswers: results.answers,
+          testTitle: results.testTitle,
+          totalQuestions: results.totalQuestions
+        }),
+      });
+
+      const aiResult = await response.json();
+      
+      if (aiResult.success) {
+        // Update the results with AI checking
+        const checkedAnswers = aiResult.checkedAnswers;
+        const totalScore = aiResult.totalScore;
+        
+        // Update database with results
+        await updateTestAttemptWithResults(results.attemptId, {
+          score: totalScore,
+          checkedAnswers: checkedAnswers,
+          status: 'ai-checked'
+        });
+        
+        toast({
+          title: "AI Checking Complete",
+          description: `Your test has been checked. Score: ${totalScore}/${results.totalQuestions}`,
+        });
+        
+        // Refresh the view to show results
+        window.location.reload();
+      }
+      */
+      
+      // Simulate processing for now
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       toast({
-        title: "Answer Key Processed",
-        description: "Your test has been checked against the answer key",
+        title: "AI Processing Complete",
+        description: "Answer key has been processed and answers checked (Demo mode - API key needed)",
       });
       
-      // In a real implementation, we would:
-      // 1. Parse the answer key file
-      // 2. Compare with user answers
-      // 3. Update the test_attempts table with the score
-      // 4. Store detailed results in a checking_results table
-      // 5. Refresh the view to show results
-      
     } catch (error) {
+      console.error('Error processing answer key:', error);
       toast({
         title: "Error",
-        description: "Failed to process answer key",
+        description: "Failed to process answer key with AI",
         variant: "destructive",
       });
     } finally {
@@ -78,31 +118,67 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
     }
   };
 
-  const handleAICheck = async () => {
+  const handlePureAICheck = async () => {
     setIsProcessing(true);
     
     try {
-      // Here we would send to AI for checking
-      console.log('Sending to AI for checking...');
+      console.log('Starting pure AI checking...');
       
-      // Simulate AI processing time
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      /* 
+      // TODO: Implement when API key is provided
+      const response = await fetch('/api/ai-pure-check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userAnswers: results.answers,
+          testTitle: results.testTitle,
+          totalQuestions: results.totalQuestions,
+          // Include question texts if available
+          questions: results.questions || []
+        }),
+      });
+
+      const aiResult = await response.json();
+      
+      if (aiResult.success) {
+        // Update the results with AI checking
+        const checkedAnswers = aiResult.checkedAnswers;
+        const totalScore = aiResult.totalScore;
+        const feedback = aiResult.feedback;
+        
+        // Update database with results
+        await updateTestAttemptWithResults(results.attemptId, {
+          score: totalScore,
+          checkedAnswers: checkedAnswers,
+          status: 'ai-checked',
+          aiFeedback: feedback
+        });
+        
+        toast({
+          title: "AI Analysis Complete",
+          description: `Your test has been analyzed. Score: ${totalScore}/${results.totalQuestions}`,
+        });
+        
+        // Refresh the view to show results
+        window.location.reload();
+      }
+      */
+      
+      // Simulate AI processing for now
+      await new Promise(resolve => setTimeout(resolve, 4000));
       
       toast({
-        title: "AI Checking Complete",
-        description: "Your test has been checked by AI",
+        title: "AI Analysis Complete",
+        description: "Your answers have been analyzed using AI knowledge (Demo mode - API key needed)",
       });
       
-      // In a real implementation, we would:
-      // 1. Send questions and answers to AI
-      // 2. Get back the scoring and feedback
-      // 3. Update the database with results
-      // 4. Refresh the view to show results
-      
     } catch (error) {
+      console.error('Error with pure AI checking:', error);
       toast({
         title: "Error",
-        description: "Failed to check with AI",
+        description: "Failed to check answers with AI",
         variant: "destructive",
       });
     } finally {
@@ -173,63 +249,66 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
           </CardContent>
         </Card>
 
-        {/* Checking Options - Show this for submitted tests */}
+        {/* AI Checking Options - Show this for submitted tests */}
         {results.status === 'submitted' && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Check Your Test</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Bot className="h-5 w-5 text-blue-600" />
+                <span>AI-Powered Checking Options</span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-sm text-gray-600 mb-4">
-                Choose how you want to check your test answers:
+                Choose how you want to check your test answers using AI:
               </div>
 
-              {/* Manual Checking */}
-              <div className="border rounded-lg p-4">
+              {/* Upload Answer Key + AI Extraction */}
+              <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3 mb-3">
                   <Upload className="h-5 w-5 text-blue-600" />
-                  <h3 className="font-medium">Upload Answer Key</h3>
+                  <h3 className="font-medium text-lg">Upload Answer Key + AI Extraction</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Upload an answer key file and we'll check your answers against it.
+                  Upload your answer key file (PDF, image, or document) and our AI will extract the correct answers and check your responses automatically.
                 </p>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="answerKey">Choose Answer Key File</Label>
+                    <Label htmlFor="answerKeyFile">Choose Answer Key File</Label>
                     <Input
-                      id="answerKey"
+                      id="answerKeyFile"
                       type="file"
-                      accept=".pdf,.txt,.doc,.docx"
+                      accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx"
                       onChange={handleFileChange}
                       disabled={isProcessing}
                     />
                   </div>
                   <Button 
-                    onClick={handleManualCheck}
+                    onClick={handleUploadAndAICheck}
                     disabled={!answerKeyFile || isProcessing}
-                    className="w-full"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                   >
-                    {isProcessing ? 'Processing...' : 'Check with Answer Key'}
+                    {isProcessing ? 'Processing with AI...' : 'Upload & Check with AI'}
                   </Button>
                 </div>
               </div>
 
-              {/* AI Checking */}
-              <div className="border rounded-lg p-4">
+              {/* Pure AI Checking */}
+              <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3 mb-3">
-                  <Bot className="h-5 w-5 text-purple-600" />
-                  <h3 className="font-medium">AI Checking</h3>
+                  <Brain className="h-5 w-5 text-purple-600" />
+                  <h3 className="font-medium text-lg">Pure AI Knowledge Checking</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Let our AI analyze your answers and provide automated checking.
+                  Let our advanced AI (GPT-4) use its own knowledge to evaluate your answers, provide scoring, and give detailed feedback without needing an answer key.
                 </p>
                 <Button 
-                  onClick={handleAICheck}
+                  onClick={handlePureAICheck}
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Processing...' : 'Check with AI'}
+                  {isProcessing ? 'Analyzing with AI...' : 'Check with AI Knowledge'}
                 </Button>
               </div>
             </CardContent>
