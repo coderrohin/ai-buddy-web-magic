@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,14 +92,23 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
   const handleViewResult = async (attempt: TestAttempt) => {
     const userAnswers = await fetchUserAnswers(attempt.id);
     
-    // Determine the correct status based on whether the test has been checked
+    // Fix the status logic: Only set to 'checked' if the test has actually been AI-checked
+    // A test is only considered 'checked' if it has a score AND the status indicates AI checking
     let resultStatus: 'submitted' | 'checked' | 'ai-checked';
     
-    if (attempt.score !== null) {
-      resultStatus = 'checked'; // or 'ai-checked' - we'll assume 'checked' for now
+    if (attempt.score !== null && (attempt.status === 'ai-checked' || attempt.status === 'checked')) {
+      resultStatus = attempt.status === 'ai-checked' ? 'ai-checked' : 'checked';
     } else {
-      resultStatus = 'submitted'; // This will show the checking options
+      // Even if score exists, if status doesn't indicate AI checking, treat as submitted
+      resultStatus = 'submitted';
     }
+    
+    console.log('Attempt details:', {
+      id: attempt.id,
+      score: attempt.score,
+      status: attempt.status,
+      resultStatus: resultStatus
+    });
     
     const result = {
       testId: attempt.test_id,
@@ -188,7 +198,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
                       >
                         {attempt.status}
                       </Badge>
-                      {attempt.score !== null && (
+                      {attempt.score !== null && (attempt.status === 'ai-checked' || attempt.status === 'checked') && (
                         <Badge variant="outline">
                           Score: {attempt.score}/{attempt.total_questions}
                         </Badge>
@@ -227,7 +237,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
                     <div className="flex items-center justify-end">
                       {attempt.status === 'completed' ? (
                         <Button onClick={() => handleViewResult(attempt)}>
-                          {attempt.score !== null ? 'View Results' : 'Check Test'}
+                          {(attempt.score !== null && (attempt.status === 'ai-checked' || attempt.status === 'checked')) ? 'View Results' : 'Check Test'}
                         </Button>
                       ) : (
                         <Badge variant="secondary">In Progress</Badge>
