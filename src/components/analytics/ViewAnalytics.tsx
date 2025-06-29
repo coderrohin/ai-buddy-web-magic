@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -67,32 +66,61 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
     }
   };
 
-  const handleCheckTest = (attempt: TestAttempt) => {
-    // Create a result object for checking
+  const fetchUserAnswers = async (attemptId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_answers')
+        .select('*')
+        .eq('attempt_id', attemptId);
+
+      if (error) throw error;
+      
+      // Convert to the format expected by TestResultsView
+      const answers: Record<string, any> = {};
+      data?.forEach((answer) => {
+        answers[answer.question_id] = answer.selected_answer;
+      });
+      
+      return answers;
+    } catch (error) {
+      console.error('Error fetching user answers:', error);
+      return {};
+    }
+  };
+
+  const handleCheckTest = async (attempt: TestAttempt) => {
+    const userAnswers = await fetchUserAnswers(attempt.id);
+    
+    // Create a result object for checking (status: submitted)
     const result = {
       testId: attempt.test_id,
       testTitle: attempt.tests.title,
       totalQuestions: attempt.total_questions,
-      answers: {}, // This would need to be fetched from user_answers table
+      answers: userAnswers,
       submittedAt: attempt.finished_at || attempt.started_at,
-      status: 'submitted' as const // Always start as submitted for checking flow
+      status: 'submitted' as const,
+      attemptId: attempt.id
     };
     
     setSelectedResult(result);
   };
 
-  const handleViewResult = (attempt: TestAttempt) => {
-    // Create a result object for viewing checked results
+  const handleViewResult = async (attempt: TestAttempt) => {
+    const userAnswers = await fetchUserAnswers(attempt.id);
+    
+    // For checked results, we would need to fetch the detailed checking results
+    // This would come from a separate table that stores the checking results
     const result = {
       testId: attempt.test_id,
       testTitle: attempt.tests.title,
       totalQuestions: attempt.total_questions,
-      answers: {}, // This would need to be fetched from user_answers table
+      answers: userAnswers,
       submittedAt: attempt.finished_at || attempt.started_at,
       status: 'checked' as const,
       score: attempt.score,
       maxScore: attempt.total_questions,
-      checkedAnswers: {} // This would contain the detailed results
+      checkedAnswers: {}, // This would contain the detailed results from checking
+      attemptId: attempt.id
     };
     
     setSelectedResult(result);
