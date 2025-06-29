@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, Bot, CheckCircle, XCircle, Clock, FileText, Brain } 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TestResultsViewProps {
   results: {
@@ -18,14 +19,15 @@ interface TestResultsViewProps {
     status: 'submitted' | 'checked' | 'ai-checked';
     score?: number;
     maxScore?: number;
-    checkedAnswers?: Record<string, { isCorrect: boolean; correctAnswer?: string; marks: number }>;
+    checkedAnswers?: Record<string, { isCorrect: boolean; correctAnswer?: string; marks: number; feedback?: string }>;
     attemptId?: string;
+    aiFeedback?: string;
+    questions?: any[];
   };
   onBackToDashboard: () => void;
 }
 
 export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewProps) => {
-  const [checkingMethod, setCheckingMethod] = useState<'upload-ai' | 'pure-ai' | null>(null);
   const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -33,6 +35,24 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
     const file = e.target.files?.[0];
     if (file) {
       setAnswerKeyFile(file);
+      toast({
+        title: "File Selected",
+        description: `Selected: ${file.name}`,
+      });
+    }
+  };
+
+  const updateTestAttemptWithResults = async (attemptId: string, updateData: any) => {
+    try {
+      const { error } = await supabase
+        .from('test_attempts')
+        .update(updateData)
+        .eq('id', attemptId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating test attempt:', error);
+      throw error;
     }
   };
 
@@ -59,32 +79,26 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
 
       console.log('Processing answer key with AI extraction...');
       
-      /* 
-      // TODO: Implement when API key is provided
-      const response = await fetch('/api/ai-check-with-key', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('ai-check-with-key', {
+        body: {
           answerKeyFile: fileContent,
           userAnswers: results.answers,
           testTitle: results.testTitle,
           totalQuestions: results.totalQuestions
-        }),
+        }
       });
 
-      const aiResult = await response.json();
-      
-      if (aiResult.success) {
+      if (error) throw error;
+
+      if (data.success) {
         // Update the results with AI checking
-        const checkedAnswers = aiResult.checkedAnswers;
-        const totalScore = aiResult.totalScore;
+        const checkedAnswers = data.checkedAnswers;
+        const totalScore = data.totalScore;
+        const extractedAnswers = data.extractedAnswers;
         
         // Update database with results
-        await updateTestAttemptWithResults(results.attemptId, {
+        await updateTestAttemptWithResults(results.attemptId!, {
           score: totalScore,
-          checkedAnswers: checkedAnswers,
           status: 'ai-checked'
         });
         
@@ -95,16 +109,13 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
         
         // Refresh the view to show results
         window.location.reload();
+      } else {
+        toast({
+          title: "API Key Required",
+          description: data.message || "OpenAI API key not configured",
+          variant: "destructive",
+        });
       }
-      */
-      
-      // Simulate processing for now
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      toast({
-        title: "AI Processing Complete",
-        description: "Answer key has been processed and answers checked (Demo mode - API key needed)",
-      });
       
     } catch (error) {
       console.error('Error processing answer key:', error);
@@ -124,36 +135,27 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
     try {
       console.log('Starting pure AI checking...');
       
-      /* 
-      // TODO: Implement when API key is provided
-      const response = await fetch('/api/ai-pure-check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('ai-pure-check', {
+        body: {
           userAnswers: results.answers,
           testTitle: results.testTitle,
           totalQuestions: results.totalQuestions,
-          // Include question texts if available
           questions: results.questions || []
-        }),
+        }
       });
 
-      const aiResult = await response.json();
-      
-      if (aiResult.success) {
+      if (error) throw error;
+
+      if (data.success) {
         // Update the results with AI checking
-        const checkedAnswers = aiResult.checkedAnswers;
-        const totalScore = aiResult.totalScore;
-        const feedback = aiResult.feedback;
+        const checkedAnswers = data.checkedAnswers;
+        const totalScore = data.totalScore;
+        const feedback = data.overallFeedback;
         
         // Update database with results
-        await updateTestAttemptWithResults(results.attemptId, {
+        await updateTestAttemptWithResults(results.attemptId!, {
           score: totalScore,
-          checkedAnswers: checkedAnswers,
-          status: 'ai-checked',
-          aiFeedback: feedback
+          status: 'ai-checked'
         });
         
         toast({
@@ -163,16 +165,13 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
         
         // Refresh the view to show results
         window.location.reload();
+      } else {
+        toast({
+          title: "API Key Required",
+          description: data.message || "OpenAI API key not configured",
+          variant: "destructive",
+        });
       }
-      */
-      
-      // Simulate AI processing for now
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      
-      toast({
-        title: "AI Analysis Complete",
-        description: "Your answers have been analyzed using AI knowledge (Demo mode - API key needed)",
-      });
       
     } catch (error) {
       console.error('Error with pure AI checking:', error);
@@ -241,7 +240,7 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {isChecked ? `${results.score}/${results.maxScore}` : 'Pending'}
+                  {isChecked ? `${results.score}/${results.maxScore || results.totalQuestions}` : 'Pending'}
                 </div>
                 <div className="text-sm text-gray-600">Score</div>
               </div>
@@ -264,7 +263,7 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
               </div>
 
               {/* Upload Answer Key + AI Extraction */}
-              <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3 mb-3">
                   <Upload className="h-5 w-5 text-blue-600" />
                   <h3 className="font-medium text-lg">Upload Answer Key + AI Extraction</h3>
@@ -272,29 +271,44 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
                 <p className="text-sm text-gray-600 mb-4">
                   Upload your answer key file (PDF, image, or document) and our AI will extract the correct answers and check your responses automatically.
                 </p>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="answerKeyFile">Choose Answer Key File</Label>
+                    <Label htmlFor="answerKeyFile" className="text-sm font-medium">Choose Answer Key File</Label>
                     <Input
                       id="answerKeyFile"
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx"
                       onChange={handleFileChange}
                       disabled={isProcessing}
+                      className="mt-1"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supported formats: PDF, JPG, PNG, TXT, DOC, DOCX
+                    </p>
                   </div>
                   <Button 
                     onClick={handleUploadAndAICheck}
                     disabled={!answerKeyFile || isProcessing}
                     className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
                   >
-                    {isProcessing ? 'Processing with AI...' : 'Upload & Check with AI'}
+                    {isProcessing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing with AI...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload & Check with AI
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
 
               {/* Pure AI Checking */}
-              <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="border rounded-lg p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3 mb-3">
                   <Brain className="h-5 w-5 text-purple-600" />
                   <h3 className="font-medium text-lg">Pure AI Knowledge Checking</h3>
@@ -307,9 +321,37 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
                   variant="outline"
                   className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
                   disabled={isProcessing}
+                  size="lg"
                 >
-                  {isProcessing ? 'Analyzing with AI...' : 'Check with AI Knowledge'}
+                  {isProcessing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
+                      Analyzing with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Check with AI Knowledge
+                    </>
+                  )}
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI Feedback Section */}
+        {results.aiFeedback && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bot className="h-5 w-5 text-blue-600" />
+                <span>AI Feedback</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-gray-700">{results.aiFeedback}</p>
               </div>
             </CardContent>
           </Card>
@@ -338,10 +380,13 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
                         </Badge>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <p>Your Answer: {results.answers[questionId]}</p>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><strong>Your Answer:</strong> {results.answers[questionId]}</p>
                       {!result.isCorrect && result.correctAnswer && (
-                        <p>Correct Answer: {result.correctAnswer}</p>
+                        <p><strong>Correct Answer:</strong> {result.correctAnswer}</p>
+                      )}
+                      {result.feedback && (
+                        <p><strong>Feedback:</strong> {result.feedback}</p>
                       )}
                     </div>
                   </div>
