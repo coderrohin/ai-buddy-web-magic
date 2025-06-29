@@ -88,35 +88,25 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
     }
   };
 
-  const handleCheckTest = async (attempt: TestAttempt) => {
-    const userAnswers = await fetchUserAnswers(attempt.id);
-    
-    // Create a result object for checking (status: submitted)
-    const result = {
-      testId: attempt.test_id,
-      testTitle: attempt.tests.title,
-      totalQuestions: attempt.total_questions,
-      answers: userAnswers,
-      submittedAt: attempt.finished_at || attempt.started_at,
-      status: 'submitted' as const,
-      attemptId: attempt.id
-    };
-    
-    setSelectedResult(result);
-  };
-
   const handleViewResult = async (attempt: TestAttempt) => {
     const userAnswers = await fetchUserAnswers(attempt.id);
     
-    // For checked results, we would need to fetch the detailed checking results
-    // This would come from a separate table that stores the checking results
+    // Determine the correct status based on whether the test has been checked
+    let resultStatus: 'submitted' | 'checked' | 'ai-checked';
+    
+    if (attempt.score !== null) {
+      resultStatus = 'checked'; // or 'ai-checked' - we'll assume 'checked' for now
+    } else {
+      resultStatus = 'submitted'; // This will show the checking options
+    }
+    
     const result = {
       testId: attempt.test_id,
       testTitle: attempt.tests.title,
       totalQuestions: attempt.total_questions,
       answers: userAnswers,
       submittedAt: attempt.finished_at || attempt.started_at,
-      status: 'checked' as const,
+      status: resultStatus,
       score: attempt.score,
       maxScore: attempt.total_questions,
       checkedAnswers: {}, // This would contain the detailed results from checking
@@ -236,15 +226,9 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
 
                     <div className="flex items-center justify-end">
                       {attempt.status === 'completed' ? (
-                        attempt.score !== null ? (
-                          <Button onClick={() => handleViewResult(attempt)}>
-                            View Results
-                          </Button>
-                        ) : (
-                          <Button onClick={() => handleCheckTest(attempt)}>
-                            Check Test
-                          </Button>
-                        )
+                        <Button onClick={() => handleViewResult(attempt)}>
+                          {attempt.score !== null ? 'View Results' : 'Check Test'}
+                        </Button>
                       ) : (
                         <Badge variant="secondary">In Progress</Badge>
                       )}
