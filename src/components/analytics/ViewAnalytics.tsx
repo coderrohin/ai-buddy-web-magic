@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -197,7 +198,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
                       >
                         {attempt.status}
                       </Badge>
-                      {attempt.score !== null && (attempt.status === 'ai-checked' || attempt.status === 'checked') && (
+                      {attempt.score !== null && (
                         <Badge variant="outline">
                           Score: {attempt.score}/{attempt.total_questions}
                         </Badge>
@@ -236,7 +237,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
                     <div className="flex items-center justify-end">
                       {attempt.status === 'completed' ? (
                         <Button onClick={() => handleViewResult(attempt)}>
-                          {(attempt.score !== null && (attempt.status === 'ai-checked' || attempt.status === 'checked')) ? 'View Results' : 'Check Test'}
+                          {attempt.score !== null ? 'View Results' : 'Check Test'}
                         </Button>
                       ) : (
                         <Badge variant="secondary">In Progress</Badge>
