@@ -46,28 +46,44 @@ export const BrowseTests = () => {
   useEffect(() => {
     fetchPublicTests();
     
-    // Set up real-time subscription for tests
+    // Set up real-time subscription for tests - listen to ALL test changes, not just public ones
     const channel = supabase
-      .channel('public-tests-changes')
+      .channel('all-tests-changes')
       .on(
         'postgres_changes',
         {
           event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'tests',
-          filter: 'is_public=eq.true'
+          table: 'tests'
+          // Remove the filter here - we'll filter in the callback
         },
         (payload) => {
           console.log('Real-time update received:', payload);
           
           if (payload.eventType === 'INSERT') {
-            setTests(current => [payload.new as Test, ...current]);
+            const newTest = payload.new as Test;
+            // Only add if it's public
+            if (newTest.is_public) {
+              setTests(current => [newTest, ...current]);
+            }
           } else if (payload.eventType === 'UPDATE') {
-            setTests(current => 
-              current.map(test => 
-                test.id === payload.new.id ? payload.new as Test : test
-              )
-            );
+            const updatedTest = payload.new as Test;
+            setTests(current => {
+              // If test became public, add it
+              if (updatedTest.is_public) {
+                const exists = current.find(test => test.id === updatedTest.id);
+                if (!exists) {
+                  return [updatedTest, ...current];
+                } else {
+                  return current.map(test => 
+                    test.id === updatedTest.id ? updatedTest : test
+                  );
+                }
+              } else {
+                // If test became private, remove it
+                return current.filter(test => test.id !== updatedTest.id);
+              }
+            });
           } else if (payload.eventType === 'DELETE') {
             setTests(current => 
               current.filter(test => test.id !== payload.old.id)
@@ -92,6 +108,7 @@ export const BrowseTests = () => {
 
       if (error) throw error;
       
+      console.log('Fetched public tests:', data); // Debug log
       setTests(data || []);
     } catch (error) {
       console.error('Error fetching tests:', error);
