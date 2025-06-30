@@ -46,6 +46,12 @@ export const BrowseTests = () => {
   useEffect(() => {
     fetchPublicTests();
     
+    // Set up periodic refresh to ensure data is always up-to-date
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Periodic refresh of public tests...');
+      fetchPublicTests();
+    }, 30000); // Refresh every 30 seconds
+    
     console.log('Setting up real-time subscription...');
     
     // Set up real-time subscription for tests - listen to ALL test changes
@@ -72,9 +78,14 @@ export const BrowseTests = () => {
             if (newTest.is_public) {
               console.log('✅ Adding public test to list');
               setTests(current => {
-                const updated = [newTest, ...current];
-                console.log('Updated tests list length:', updated.length);
-                return updated;
+                // Check if test already exists to avoid duplicates
+                const exists = current.find(test => test.id === newTest.id);
+                if (!exists) {
+                  const updated = [newTest, ...current];
+                  console.log('Updated tests list length:', updated.length);
+                  return updated;
+                }
+                return current;
               });
               
               // Show toast notification
@@ -122,11 +133,20 @@ export const BrowseTests = () => {
           console.log('✅ Successfully subscribed to real-time updates');
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Real-time subscription error');
+          // Fallback: refresh data when real-time fails
+          console.log('🔄 Refreshing data due to real-time connection error...');
+          fetchPublicTests();
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⏰ Real-time subscription timed out');
+          // Fallback: refresh data when real-time times out
+          console.log('🔄 Refreshing data due to real-time timeout...');
+          fetchPublicTests();
         }
       });
 
     return () => {
-      console.log('🔌 Cleaning up real-time subscription');
+      console.log('🔌 Cleaning up real-time subscription and refresh interval');
+      clearInterval(refreshInterval);
       supabase.removeChannel(channel);
     };
   }, []);
