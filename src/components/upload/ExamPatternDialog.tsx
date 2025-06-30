@@ -67,43 +67,77 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
     setUploading(true);
 
     try {
+      console.log('🚀 Starting test upload process...');
+      console.log('Selected pattern:', selectedPattern);
+      console.log('Allow public use:', allowPublicUse);
+      console.log('File:', selectedFile.name);
+
       // Upload PDF to Supabase Storage
       const fileName = `${user.id}/${Date.now()}_${selectedFile.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('test-pdfs')
         .upload(fileName, selectedFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('✅ File uploaded successfully:', uploadData);
 
       // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage
         .from('test-pdfs')
         .getPublicUrl(fileName);
 
+      console.log('📂 Generated public URL:', urlData.publicUrl);
+
       // Create test record in database
       const duration = selectedPattern === 'custom' ? parseInt(customTime) : examPatterns.find(p => p.id === selectedPattern)?.duration;
+      const isPublic = allowPublicUse === 'yes';
       
-      const { data: testData, error: testError } = await supabase
+      const testData = {
+        user_id: user.id,
+        title: selectedFile.name.replace('.pdf', ''),
+        description: `${examPatterns.find(p => p.id === selectedPattern)?.name || 'Custom'} test uploaded from PDF`,
+        pdf_url: urlData.publicUrl,
+        duration_minutes: duration,
+        exam_pattern: selectedPattern,
+        is_public: isPublic,
+        total_questions: 0 // Will be updated when PDF is processed
+      };
+
+      console.log('💾 Inserting test data:', testData);
+
+      const { data: insertedTest, error: testError } = await supabase
         .from('tests')
-        .insert({
-          user_id: user.id,
-          title: selectedFile.name.replace('.pdf', ''),
-          description: `${examPatterns.find(p => p.id === selectedPattern)?.name || 'Custom'} test uploaded from PDF`,
-          pdf_url: urlData.publicUrl,
-          duration_minutes: duration,
-          exam_pattern: selectedPattern,
-          is_public: allowPublicUse === 'yes',
-          total_questions: 0 // Will be updated when PDF is processed
-        })
+        .insert(testData)
         .select()
         .single();
 
-      if (testError) throw testError;
+      if (testError) {
+        console.error('❌ Database insert error:', testError);
+        throw testError;
+      }
+
+      console.log('✅ Test created successfully:', insertedTest);
+
+      // Show success message
+      const examPatternName = examPatterns.find(p => p.id === selectedPattern)?.name || 'Custom';
+      const publicMessage = isPublic 
+        ? `and is now available for everyone in the ${examPatternName} category under Browse Tests`
+        : 'and is private to your account';
 
       toast({
         title: "Test uploaded successfully!",
-        description: `Your test "${testData.title}" has been created and ${allowPublicUse === 'yes' ? 'is now available for everyone' : 'is private to your account'}.`,
+        description: `Your test "${insertedTest.title}" has been created ${publicMessage}.`,
       });
+
+      // Log for debugging
+      if (isPublic) {
+        console.log(`🌍 Public test created in category: ${selectedPattern}`);
+        console.log('📊 Test should now be visible in Browse Tests under', examPatternName);
+      }
 
       // Reset form
       setSelectedPattern('');
@@ -113,7 +147,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
       
       onOpenChange(false);
     } catch (error) {
-      console.error('Error uploading test:', error);
+      console.error('❌ Error uploading test:', error);
       toast({
         title: "Upload failed",
         description: "There was an error uploading your test. Please try again.",
@@ -221,13 +255,13 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
             </Label>
             <p className="text-sm text-gray-600 mb-3">
               Can we make this test available for other users to practice? 
-              (Your PDF will be added to our Browse Tests section)
+              (Your PDF will be added to our Browse Tests section under the selected exam pattern)
             </p>
             <RadioGroup value={allowPublicUse} onValueChange={setAllowPublicUse}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="yes" id="yes" />
                 <Label htmlFor="yes" className="cursor-pointer">
-                  Yes, allow others to use this test
+                  Yes, allow others to use this test (will appear in Browse Tests)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -246,7 +280,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
               disabled={!isFormValid || uploading}
               className="px-8"
             >
-              {uploading ? 'Uploading...' : 'Upload & Start Test Creation'}
+              {uploading ? 'Uploading...' : 'Upload & Create Test'}
             </Button>
           </div>
         </div>

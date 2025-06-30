@@ -165,6 +165,15 @@ export const BrowseTests = () => {
       
       console.log('📊 Fetched public tests:', data?.length || 0, 'tests');
       console.log('Tests data:', data);
+      
+      // Group tests by exam pattern for debugging
+      const groupedTests = data?.reduce((acc, test) => {
+        acc[test.exam_pattern] = (acc[test.exam_pattern] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      console.log('📈 Tests by category:', groupedTests);
+      
       setTests(data || []);
     } catch (error) {
       console.error('❌ Error fetching tests:', error);
@@ -197,7 +206,7 @@ export const BrowseTests = () => {
     
     console.log('🎯 Selected category:', selectedCategory);
     console.log('📋 Category tests:', categoryTests);
-    console.log('🔍 Filtered tests:', filteredTests);
+    console.log('🔍 Filtered tests (after search):', filteredTests);
 
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -226,18 +235,25 @@ export const BrowseTests = () => {
                 />
               </div>
               <Badge variant="secondary">
-                {categoryTests.length} test{categoryTests.length !== 1 ? 's' : ''}
+                {filteredTests.length} test{filteredTests.length !== 1 ? 's' : ''} found
               </Badge>
             </div>
           </div>
 
-          {categoryTests.length === 0 ? (
+          {filteredTests.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No tests available</h3>
-              <p className="text-gray-600">No tests have been uploaded for this category yet.</p>
+              <p className="text-gray-600">
+                {categoryTests.length === 0 
+                  ? `No tests have been uploaded for ${categoryInfo?.name} yet.`
+                  : searchTerm 
+                    ? `No tests match your search "${searchTerm}" in ${categoryInfo?.name}.`
+                    : "No tests available."
+                }
+              </p>
               <p className="text-sm text-gray-500 mt-2">
-                Debug: Total tests loaded: {tests.length}, Category: {selectedCategory}
+                Debug: Total tests: {tests.length}, Category tests: {categoryTests.length}, Filtered: {filteredTests.length}
               </p>
             </div>
           ) : (
