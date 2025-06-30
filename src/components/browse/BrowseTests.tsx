@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -185,12 +186,18 @@ export const BrowseTests = () => {
   });
 
   const getTestsByCategory = (categoryId: string) => {
-    return tests.filter(test => test.exam_pattern === categoryId);
+    const categoryTests = tests.filter(test => test.exam_pattern === categoryId);
+    console.log(`📂 Tests for category ${categoryId}:`, categoryTests.length, categoryTests);
+    return categoryTests;
   };
 
   if (selectedCategory) {
     const categoryTests = getTestsByCategory(selectedCategory);
     const categoryInfo = examCategories.find(cat => cat.id === selectedCategory);
+    
+    console.log('🎯 Selected category:', selectedCategory);
+    console.log('📋 Category tests:', categoryTests);
+    console.log('🔍 Filtered tests:', filteredTests);
 
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -229,6 +236,9 @@ export const BrowseTests = () => {
               <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No tests available</h3>
               <p className="text-gray-600">No tests have been uploaded for this category yet.</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Debug: Total tests loaded: {tests.length}, Category: {selectedCategory}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
