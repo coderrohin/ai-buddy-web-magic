@@ -46,7 +46,9 @@ export const BrowseTests = () => {
   useEffect(() => {
     fetchPublicTests();
     
-    // Set up real-time subscription for tests - listen to ALL test changes, not just public ones
+    console.log('Setting up real-time subscription...');
+    
+    // Set up real-time subscription for tests - listen to ALL test changes
     const channel = supabase
       .channel('all-tests-changes')
       .on(
@@ -55,51 +57,83 @@ export const BrowseTests = () => {
           event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'tests'
-          // Remove the filter here - we'll filter in the callback
+          // No filter here - we handle filtering in the callback
         },
         (payload) => {
-          console.log('Real-time update received:', payload);
+          console.log('🔥 Real-time update received:', payload);
+          console.log('Event type:', payload.eventType);
+          console.log('New data:', payload.new);
+          console.log('Old data:', payload.old);
           
           if (payload.eventType === 'INSERT') {
             const newTest = payload.new as Test;
+            console.log('📝 New test inserted, is_public:', newTest.is_public);
             // Only add if it's public
             if (newTest.is_public) {
-              setTests(current => [newTest, ...current]);
+              console.log('✅ Adding public test to list');
+              setTests(current => {
+                const updated = [newTest, ...current];
+                console.log('Updated tests list length:', updated.length);
+                return updated;
+              });
+              
+              // Show toast notification
+              toast({
+                title: "New test available!",
+                description: `"${newTest.title}" has been added to ${examCategories.find(cat => cat.id === newTest.exam_pattern)?.name || 'Custom'} tests.`,
+              });
+            } else {
+              console.log('❌ Test is private, not adding to list');
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedTest = payload.new as Test;
+            console.log('📝 Test updated, is_public:', updatedTest.is_public);
+            
             setTests(current => {
               // If test became public, add it
               if (updatedTest.is_public) {
                 const exists = current.find(test => test.id === updatedTest.id);
                 if (!exists) {
+                  console.log('✅ Test became public, adding to list');
                   return [updatedTest, ...current];
                 } else {
+                  console.log('📝 Updating existing public test');
                   return current.map(test => 
                     test.id === updatedTest.id ? updatedTest : test
                   );
                 }
               } else {
                 // If test became private, remove it
+                console.log('❌ Test became private, removing from list');
                 return current.filter(test => test.id !== updatedTest.id);
               }
             });
           } else if (payload.eventType === 'DELETE') {
+            console.log('🗑️ Test deleted, removing from list');
             setTests(current => 
               current.filter(test => test.id !== payload.old.id)
             );
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to real-time updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time subscription error');
+        }
+      });
 
     return () => {
+      console.log('🔌 Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, []);
 
   const fetchPublicTests = async () => {
     try {
+      console.log('🔍 Fetching public tests...');
       const { data, error } = await supabase
         .from('tests')
         .select('*')
@@ -108,10 +142,11 @@ export const BrowseTests = () => {
 
       if (error) throw error;
       
-      console.log('Fetched public tests:', data); // Debug log
+      console.log('📊 Fetched public tests:', data?.length || 0, 'tests');
+      console.log('Tests data:', data);
       setTests(data || []);
     } catch (error) {
-      console.error('Error fetching tests:', error);
+      console.error('❌ Error fetching tests:', error);
       toast({
         title: "Error",
         description: "Failed to load tests",
