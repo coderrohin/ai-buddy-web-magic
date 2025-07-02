@@ -181,20 +181,8 @@ export const TestTakingPanel = ({
         </div>
       )}
 
-      {/* Test Sidebar - Hidden on mobile, shown on desktop */}
-      {!isMobile && (
-        <TestSidebar
-          questions={questions}
-          currentQuestionIndex={currentQuestionIndex}
-          answers={answers}
-          flaggedQuestions={flaggedQuestions}
-          onQuestionSelect={setCurrentQuestionIndex}
-          testTitle={testTitle}
-        />
-      )}
-
-      {/* Main Test Area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Main Test Area - Now on the LEFT */}
+      <div className="flex-1 flex flex-col min-h-0 order-1 lg:order-1">
         {/* Desktop Header */}
         {!isMobile && (
           <div className="bg-primary text-primary-foreground p-4 border-b border-border">
@@ -385,6 +373,20 @@ export const TestTakingPanel = ({
           </div>
         </div>
       </div>
+
+      {/* Test Sidebar - Now on the RIGHT side */}
+      {!isMobile && (
+        <div className="order-2 lg:order-2">
+          <TestSidebar
+            questions={questions}
+            currentQuestionIndex={currentQuestionIndex}
+            answers={answers}
+            flaggedQuestions={flaggedQuestions}
+            onQuestionSelect={setCurrentQuestionIndex}
+            testTitle={testTitle}
+          />
+        </div>
+      )}
 
       {/* Submission Dialog */}
       <TestSubmissionDialog
