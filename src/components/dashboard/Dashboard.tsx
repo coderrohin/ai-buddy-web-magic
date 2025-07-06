@@ -221,18 +221,25 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-primary rounded-full blur-3xl animate-pulse-glow"></div>
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary rounded-full blur-2xl opacity-50"></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="relative bg-white/80 backdrop-blur-lg shadow-elegant border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">MCQ Test Platform</h1>
+            <div className="flex items-center animate-fade-in">
+              <BookOpen className="h-8 w-8 text-blue-600 mr-3 animate-float" />
+              <h1 className="text-xl font-semibold bg-gradient-primary bg-clip-text text-transparent">MCQ Test Platform</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <div className="flex items-center space-x-4 animate-slide-up">
+              <span className="text-sm text-muted-foreground">Welcome, {user?.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut} className="hover:shadow-glow transition-all duration-300">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -242,48 +249,63 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
-          <p className="text-gray-600">Manage your tests and track your progress</p>
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8 animate-fade-in">
+          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">Dashboard</h2>
+          <p className="text-muted-foreground text-lg">Manage your tests and track your progress</p>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowExamDialog(true)}>
+          <Card className="cursor-pointer group hover:shadow-elegant transition-all duration-500 hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-white/30 animate-slide-up" 
+                style={{ animationDelay: '0.1s' }} 
+                onClick={() => setShowExamDialog(true)}>
             <CardHeader className="text-center">
-              <Upload className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-              <CardTitle>Upload Test</CardTitle>
+              <div className="relative">
+                <Upload className="h-12 w-12 text-blue-600 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
+                <div className="absolute inset-0 bg-blue-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <CardTitle className="group-hover:text-blue-600 transition-colors duration-300">Upload Test</CardTitle>
               <CardDescription>Upload a PDF with MCQs</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" onClick={() => setShowExamDialog(true)}>
+              <Button className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300 group-hover:scale-105" onClick={() => setShowExamDialog(true)}>
                 Upload PDF
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setCurrentView('browse')}>
+          <Card className="cursor-pointer group hover:shadow-elegant transition-all duration-500 hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-white/30 animate-slide-up" 
+                style={{ animationDelay: '0.2s' }} 
+                onClick={() => setCurrentView('browse')}>
             <CardHeader className="text-center">
-              <Search className="h-12 w-12 text-green-600 mx-auto mb-2" />
-              <CardTitle>Browse Tests</CardTitle>
+              <div className="relative">
+                <Search className="h-12 w-12 text-green-600 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
+                <div className="absolute inset-0 bg-green-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <CardTitle className="group-hover:text-green-600 transition-colors duration-300">Browse Tests</CardTitle>
               <CardDescription>Explore available tests by category</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline" onClick={() => setCurrentView('browse')}>
+              <Button className="w-full bg-gradient-secondary hover:shadow-glow transition-all duration-300 group-hover:scale-105" variant="outline" onClick={() => setCurrentView('browse')}>
                 Browse Tests
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleViewAnalytics}>
+          <Card className="cursor-pointer group hover:shadow-elegant transition-all duration-500 hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-white/30 animate-slide-up" 
+                style={{ animationDelay: '0.3s' }} 
+                onClick={handleViewAnalytics}>
             <CardHeader className="text-center">
-              <BarChart3 className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-              <CardTitle>View Analytics</CardTitle>
+              <div className="relative">
+                <BarChart3 className="h-12 w-12 text-purple-600 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
+                <div className="absolute inset-0 bg-purple-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <CardTitle className="group-hover:text-purple-600 transition-colors duration-300">View Analytics</CardTitle>
               <CardDescription>Check your test performance and results</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline" onClick={handleViewAnalytics}>
+              <Button className="w-full bg-gradient-accent hover:shadow-glow transition-all duration-300 group-hover:scale-105" variant="outline" onClick={handleViewAnalytics}>
                 View Analytics
               </Button>
             </CardContent>
@@ -291,50 +313,72 @@ export const Dashboard = () => {
         </div>
 
         {/* Recent Tests */}
-        <Card>
+        <Card className="shadow-card bg-white/90 backdrop-blur-sm border-white/30 animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <CardHeader>
-            <CardTitle>Your Tests</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary animate-pulse" />
+              Your Tests
+            </CardTitle>
             <CardDescription>
               {tests.length === 0 ? 'No tests uploaded yet' : `${tests.length} test(s) available`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading tests...</div>
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                Loading tests...
+              </div>
             ) : tests.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No tests yet</h3>
-                <p className="text-gray-600 mb-4">Upload your first PDF to get started</p>
-                <Button onClick={() => setShowExamDialog(true)}>
+              <div className="text-center py-8 animate-fade-in">
+                <div className="relative">
+                  <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4 animate-float" />
+                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl"></div>
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">No tests yet</h3>
+                <p className="text-muted-foreground mb-4">Upload your first PDF to get started</p>
+                <Button onClick={() => setShowExamDialog(true)} className="bg-gradient-primary hover:shadow-glow transition-all duration-300 hover:scale-105">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload PDF
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                {tests.map((test) => (
-                  <div key={test.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div>
-                      <h4 className="font-medium text-gray-900">{test.title}</h4>
-                      <p className="text-sm text-gray-600">{test.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                        <span>{test.total_questions} questions</span>
-                        <span>{test.duration_minutes} minutes</span>
-                        <span>Created {new Date(test.created_at).toLocaleDateString()}</span>
+                {tests.map((test, index) => (
+                  <div key={test.id} 
+                       className="flex items-center justify-between p-4 border rounded-lg hover:shadow-card bg-white/50 hover:bg-white/80 transition-all duration-300 hover:-translate-y-1 animate-slide-up group"
+                       style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-foreground group-hover:text-primary transition-colors duration-300">{test.title}</h4>
+                      <p className="text-sm text-muted-foreground">{test.description}</p>
+                      <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-2">
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          {test.total_questions} questions
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                          {test.duration_minutes} minutes
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                          Created {new Date(test.created_at).toLocaleDateString()}
+                        </span>
                         {test.exam_pattern && (
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          <span className="bg-gradient-primary text-white px-2 py-1 rounded-full text-xs font-medium">
                             {test.exam_pattern.toUpperCase()}
                           </span>
                         )}
                         {test.is_public && (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                          <span className="bg-gradient-secondary text-foreground px-2 py-1 rounded-full text-xs font-medium">
                             Public
                           </span>
                         )}
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => handleStartTest(test)}>
+                    <Button size="sm" 
+                            onClick={() => handleStartTest(test)}
+                            className="bg-gradient-primary hover:shadow-glow transition-all duration-300 hover:scale-105 group-hover:animate-pulse">
                       <Play className="h-4 w-4 mr-2" />
                       Start Test
                     </Button>
