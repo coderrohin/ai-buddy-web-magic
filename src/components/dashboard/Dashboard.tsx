@@ -199,7 +199,7 @@ export const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+                <BookOpen className="h-8 w-8 text-purple-600 mr-3" />
                 <h1 className="text-xl font-semibold text-gray-900">MCQ Test Platform</h1>
               </div>
               <div className="flex items-center space-x-4">
@@ -234,8 +234,8 @@ export const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center animate-fade-in">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3 animate-float" />
-              <h1 className="text-xl font-semibold bg-gradient-primary bg-clip-text text-transparent">MCQ Test Platform</h1>
+              <BookOpen className="h-8 w-8 text-purple-600 mr-3 animate-float" />
+              <h1 className="text-xl font-semibold text-purple-700">MCQ Test Platform</h1>
             </div>
             <div className="flex items-center space-x-4 animate-slide-up">
               <span className="text-sm text-muted-foreground">Welcome, {user?.email}</span>
@@ -251,7 +251,7 @@ export const Dashboard = () => {
       {/* Main Content */}
       <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 animate-fade-in">
-          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">Dashboard</h2>
+          <h2 className="text-4xl font-bold text-purple-600 mb-2 drop-shadow-lg">Dashboard</h2>
           <p className="text-muted-foreground text-lg">Manage your tests and track your progress</p>
         </div>
 
@@ -262,10 +262,10 @@ export const Dashboard = () => {
                 onClick={() => setShowExamDialog(true)}>
             <CardHeader className="text-center">
               <div className="relative">
-                <Upload className="h-12 w-12 text-blue-600 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
-                <div className="absolute inset-0 bg-blue-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Upload className="h-12 w-12 text-purple-500 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
+                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <CardTitle className="group-hover:text-blue-600 transition-colors duration-300">Upload Test</CardTitle>
+              <CardTitle className="group-hover:text-purple-500 transition-colors duration-300">Upload Test</CardTitle>
               <CardDescription>Upload a PDF with MCQs</CardDescription>
             </CardHeader>
             <CardContent>
@@ -280,10 +280,10 @@ export const Dashboard = () => {
                 onClick={() => setCurrentView('browse')}>
             <CardHeader className="text-center">
               <div className="relative">
-                <Search className="h-12 w-12 text-green-600 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
-                <div className="absolute inset-0 bg-green-600/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Search className="h-12 w-12 text-teal-500 mx-auto mb-2 group-hover:animate-float transition-all duration-300" />
+                <div className="absolute inset-0 bg-teal-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <CardTitle className="group-hover:text-green-600 transition-colors duration-300">Browse Tests</CardTitle>
+              <CardTitle className="group-hover:text-teal-500 transition-colors duration-300">Browse Tests</CardTitle>
               <CardDescription>Explore available tests by category</CardDescription>
             </CardHeader>
             <CardContent>
@@ -352,14 +352,14 @@ export const Dashboard = () => {
                       <h4 className="font-medium text-foreground group-hover:text-primary transition-colors duration-300">{test.title}</h4>
                       <p className="text-sm text-muted-foreground">{test.description}</p>
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                          {test.total_questions} questions
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                          {test.duration_minutes} minutes
-                        </span>
+                         <span className="flex items-center gap-1">
+                           <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                           {test.total_questions} questions
+                         </span>
+                         <span className="flex items-center gap-1">
+                           <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                           {test.duration_minutes} minutes
+                         </span>
                         <span className="flex items-center gap-1">
                           <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
                           Created {new Date(test.created_at).toLocaleDateString()}
