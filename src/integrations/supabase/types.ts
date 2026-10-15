@@ -14,7 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      test_attempts: {
+        Row: {
+          finished_at: string | null
+          id: string
+          score: number | null
+          started_at: string
+          status: string
+          test_id: string
+          total_questions: number
+          total_time_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          finished_at?: string | null
+          id?: string
+          score?: number | null
+          started_at?: string
+          status?: string
+          test_id: string
+          total_questions?: number
+          total_time_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          finished_at?: string | null
+          id?: string
+          score?: number | null
+          started_at?: string
+          status?: string
+          test_id?: string
+          total_questions?: number
+          total_time_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          exam_pattern: string
+          id: string
+          is_public: boolean
+          pdf_url: string | null
+          title: string
+          total_questions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          exam_pattern?: string
+          id?: string
+          is_public?: boolean
+          pdf_url?: string | null
+          title: string
+          total_questions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          exam_pattern?: string
+          id?: string
+          is_public?: boolean
+          pdf_url?: string | null
+          title?: string
+          total_questions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_answers: {
+        Row: {
+          attempt_id: string
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          question_id: string
+          selected_answer: Json | null
+          time_spent_seconds: number
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id: string
+          selected_answer?: Json | null
+          time_spent_seconds?: number
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string
+          selected_answer?: Json | null
+          time_spent_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "test_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

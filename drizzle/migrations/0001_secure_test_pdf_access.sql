@@ -1,0 +1,4 @@
+CREATE POLICY "Users can upload PDFs to their own folder" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'test-pdfs' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Users can view their own and public test PDFs" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'test-pdfs' AND (auth.uid()::text = (storage.foldername(name))[1] OR EXISTS (SELECT 1 FROM public.tests WHERE tests.is_public = true AND position(storage.objects.name in tests.pdf_url) > 0)));
+CREATE POLICY "Users can update their own PDFs" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'test-pdfs' AND auth.uid()::text = (storage.foldername(name))[1]) WITH CHECK (bucket_id = 'test-pdfs' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Users can delete their own PDFs" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'test-pdfs' AND auth.uid()::text = (storage.foldername(name))[1]);
