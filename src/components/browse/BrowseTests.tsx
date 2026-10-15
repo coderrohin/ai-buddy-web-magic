@@ -8,6 +8,8 @@ import { BookOpen, Search, Clock, Users, Play, FolderOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+const appDatabase = supabase as unknown as { from: (table: string) => any };
+
 interface Test {
   id: string;
   title: string;
@@ -155,7 +157,7 @@ export const BrowseTests = () => {
   const fetchPublicTests = async () => {
     try {
       console.log('🔍 Fetching public tests...');
-      const { data, error } = await supabase
+      const { data, error } = await appDatabase
         .from('tests')
         .select('*')
         .eq('is_public', true)  // Only fetch public tests

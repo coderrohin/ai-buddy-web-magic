@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 
+const appDatabase = supabase as unknown as { from: (table: string) => any };
+
 interface ExamPatternDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -109,7 +111,7 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
 
       console.log('💾 Inserting test data:', testData);
 
-      const { data: insertedTest, error: testError } = await supabase
+      const { data: insertedTest, error: testError } = await appDatabase
         .from('tests')
         .insert(testData)
         .select()
@@ -118,6 +120,10 @@ export const ExamPatternDialog = ({ open, onOpenChange }: ExamPatternDialogProps
       if (testError) {
         console.error('❌ Database insert error:', testError);
         throw testError;
+      }
+
+      if (!insertedTest) {
+        throw new Error('Test record was not returned after upload.');
       }
 
       console.log('✅ Test created successfully:', insertedTest);

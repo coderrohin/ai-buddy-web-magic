@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+const appDatabase = supabase as unknown as { from: (table: string) => any };
+
 interface TestResultsViewProps {
   results: {
     testId: string;
@@ -44,7 +46,7 @@ export const TestResultsView = ({ results, onBackToDashboard }: TestResultsViewP
 
   const updateTestAttemptWithResults = async (attemptId: string, updateData: any) => {
     try {
-      const { error } = await supabase
+      const { error } = await appDatabase
         .from('test_attempts')
         .update(updateData)
         .eq('id', attemptId);

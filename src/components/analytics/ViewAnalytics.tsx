@@ -9,6 +9,8 @@ import { ArrowLeft, Clock, CheckCircle, FileText, Bot, Upload } from 'lucide-rea
 import { toast } from '@/hooks/use-toast';
 import { TestResultsView } from '@/components/test/TestResultsView';
 
+const appDatabase = supabase as unknown as { from: (table: string) => any };
+
 interface TestAttempt {
   id: string;
   test_id: string;
@@ -41,7 +43,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await appDatabase
         .from('test_attempts')
         .select(`
           *,
@@ -69,7 +71,7 @@ export const ViewAnalytics = ({ onBackToDashboard }: ViewAnalyticsProps) => {
 
   const fetchUserAnswers = async (attemptId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await appDatabase
         .from('user_answers')
         .select('*')
         .eq('attempt_id', attemptId);

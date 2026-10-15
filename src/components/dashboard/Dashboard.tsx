@@ -11,6 +11,8 @@ import { TestTakingPanel } from '@/components/test/TestTakingPanel';
 import { TestResultsView } from '@/components/test/TestResultsView';
 import { ViewAnalytics } from '@/components/analytics/ViewAnalytics';
 
+const appDatabase = supabase as unknown as { from: (table: string) => any };
+
 interface Test {
   id: string;
   title: string;
@@ -83,7 +85,7 @@ export const Dashboard = () => {
 
   const fetchTests = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await appDatabase
         .from('tests')
         .select('*')
         .eq('user_id', user?.id)
@@ -139,7 +141,7 @@ export const Dashboard = () => {
     
     // Here we would save the test attempt to the database
     try {
-      const { error } = await supabase
+      const { error } = await appDatabase
         .from('test_attempts')
         .insert({
           user_id: user?.id,
